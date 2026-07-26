@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App de Entrenamiento Auditivo</title>
+    <!-- Tailwind CSS para diseño rápido y limpio -->
+    <script src="https://jsdelivr.net"></script>
+    <!-- Tone.js para la generación de audio sintético real -->
+    <script src="https://cloudflare.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center p-4 font-sans">
+
+    <header class="text-center my-6">
+        <h1 class="text-3xl font-bold text-indigo-400">Entrenamiento Auditivo</h1>
+        <p class="text-gray-400 text-sm mt-1">Módulo 1: Reconocimiento de Escalas Menores</p>
+    </header>
+
+    <main class="w-full max-w-md bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-700">
+        <!-- Configuración de Tonalidad -->
+        <div class="mb-6 flex gap-4">
+            <div class="w-1/2">
+                <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Nota Raíz</label>
+                <select id="root-note" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="A">La (A)</option>
+                    <option value="C">Do (C)</option>
+                    <option value="D">Re (D)</option>
+                    <option value="E">Mi (E)</option>
+                    <option value="G">Sol (G)</option>
+                </select>
+            </div>
+            <div class="w-1/2">
+                <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Octava</label>
+                <select id="octave" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="3">Octava 3 (Grave)</option>
+                    <option value="4" selected>Octava 4 (Media)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Panel de Control Auditivo -->
+        <div class="bg-gray-900 rounded-xl p-4 text-center border border-gray-700 mb-6">
+            <span class="text-xs text-indigo-300 font-mono tracking-widest uppercase block mb-3">Generador de Escalas</span>
+            <button id="btn-play" class="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold py-4 px-6 rounded-xl transition duration-150 shadow-lg shadow-indigo-900/40 flex items-center justify-center gap-2">
+                <span>🔊</span> Escuchar Escala Aleatoria
+            </button>
+            <p id="status-text" class="text-sm text-gray-400 mt-3 italic">Presiona el botón para empezar la trivia.</p>
+        </div>
+
+        <!-- Panel de Opciones / Trivia -->
+        <div>
+            <label class="block text-xs font-semibold text-gray-400 uppercase mb-3">¿Qué escala escuchaste?</label>
+            <div class="space-y-3">
+                <button onclick="checkAnswer('natural')" class="option-btn w-full bg-gray-700 hover:bg-gray-600 p-4 rounded-xl text-left font-medium transition flex justify-between items-center border border-transparent disabled:opacity-50">
+                    <span>Escala Menor Natural</span>
+                    <span class="text-xs font-mono text-gray-400">1 2 ♭3 4 5 ♭6 ♭7</span>
+                </button>
+                <button onclick="checkAnswer('harmonica')" class="option-btn w-full bg-gray-700 hover:bg-gray-600 p-4 rounded-xl text-left font-medium transition flex justify-between items-center border border-transparent disabled:opacity-50">
+                    <span>Escala Menor Armónica</span>
+                    <span class="text-xs font-mono text-gray-400">1 2 ♭3 4 5 ♭6 7</span>
+                </button>
+                <button onclick="checkAnswer('melodica')" class="option-btn w-full bg-gray-700 hover:bg-gray-600 p-4 rounded-xl text-left font-medium transition flex justify-between items-center border border-transparent disabled:opacity-50">
+                    <span>Escala Menor Melódica</span>
+                    <span class="text-xs font-mono text-gray-400">1 2 ♭3 4 5 6 7</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Feedback del resultado -->
+        <div id="feedback" class="mt-6 text-center font-bold hidden text-lg p-3 rounded-xl"></div>
+    </main>
+
+    <footer class="mt-auto py-4 text-xs text-gray-500">
+        Desarrollo Base MVP • Usa auriculares para mejor respuesta de graves.
+    </footer>
+
+    <!-- LÓGICA DE PROGRAMACIÓN EN JAVASCRIPT -->
+    <script>
+        // Configuración del sintetizador básico de Tone.js
+        const synth = new Tone.Synth({
+            oscillator: { type: "triangle" }, // Sonido suave tipo flauta/piano eléctrico
+            envelope: { attack: 0.1, decay: 0.2, sustain: 0.6, release: 0.4 }
+        }).toDestination();
+
+        // Estructuras de intervalos en semitonos (Escalas de 7 notas + octava)
+        const scaleIntervals = {
+            natural:,
+            harmonica:,
+            melodica: [0, 2, 3, 5, 7, 9, 11, 12]
+        };
+
+        let currentScaleType = ""; 
+        let isPlaying = false;
+
+        document.getElementById('btn-play').addEventListener('click', async () => {
+            if (isPlaying) return;
+            
+            // Tone.js requiere que el usuario interactúe antes de activar el contexto de audio
+            await Tone.start();
+            resetUI();
+
+            // 1. Elegir un tipo de escala menor al azar
+            const types = ['natural', 'harmonica', 'melodica'];
+            currentScaleType = types[Math.floor(Math.random() * types.length)];
+
+            // 2. Obtener la nota raíz configurada
+            const root = document.getElementById('root-note').value;
+            const octave = parseInt(document.getElementById('octave').value);
+            const baseFrequency = Tone.Frequency(`${root}${octave}`).toFrequency();
+
+            // 3. Construir las frecuencias de las 7 notas ascendentes
+            const intervals = scaleIntervals[currentScaleType];
+            const notesToPlay = intervals.map(semi => baseFrequency * Math.pow(2, semi / 12));
+
+            // 4. Reproducir la secuencia
+            isPlaying = true;
+            document.getElementById('status-text').innerText = "Reproduciendo escala...";
+            toggleButtons(true);
+
+            let now = Tone.now();
+            notesToPlay.forEach((freq, index) => {
+                // Toca cada nota cada 0.5 segundos
+                synth.triggerAttackRelease(freq, "4n", now + (index * 0.5));
+            });
+
+            // Desbloquear interfaz al terminar la reproducción
+            setTimeout(() => {
+                isPlaying = false;
+                document.getElementById('status-text').innerText = "¡Listo! Elige tu respuesta abajo.";
+                toggleButtons(false);
+            }, notesToPlay.length * 500);
+        });
+
+        // Comprobación de respuestas de la trivia
+        function checkAnswer(selectedType) {
+            if (!currentScaleType) {
+                alert("Primero debes escuchar una escala presionando el botón de arriba.");
+                return;
+            }
+
+            const feedbackDiv = document.getElementById('feedback');
+            feedbackDiv.classList.remove('hidden', 'bg-green-900/50', 'text-green-400', 'bg-red-900/50', 'text-red-400');
+
+            if (selectedType === currentScaleType) {
+                feedbackDiv.innerText = "¡Correcto! Es una escala menor " + translateType(currentScaleType);
+                feedbackDiv.classList.add('bg-green-900/50', 'text-green-400');
+            } else {
+                feedbackDiv.innerText = "Incorrecto. Era una escala menor " + translateType(currentScaleType);
+                feedbackDiv.classList.add('bg-red-900/50', 'text-red-400');
+            }
+        }
+
+        // Funciones auxiliares de UI
+        function translateType(type) {
+            if(type === 'natural') return 'Natural';
+            if(type === 'harmonica') return 'Armónica';
+            return 'Melódica';
+        }
+
+        function resetUI() {
+            document.getElementById('feedback').classList.add('hidden');
+        }
+
+        function toggleButtons(disabled) {
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(btn => btn.disabled = disabled);
+        }
+    </script>
+</body>
+</html>
