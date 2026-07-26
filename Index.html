@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>App de Entrenamiento Auditivo</title>
     <style>
-        /* CSS Integrado - Robusto para móviles */
         body {
             background-color: #111827;
             color: #f3f4f6;
@@ -18,9 +17,15 @@
             padding: 16px;
             box-sizing: border-box;
         }
-        header { text-align: center; margin: 24px 0; }
+        header { text-align: center; margin: 16px 0; }
         h1 { color: #818cf8; font-size: 1.8rem; margin: 0; font-weight: bold; }
         header p { color: #9ca3af; font-size: 0.875rem; margin-top: 4px; }
+        
+        /* Pestañas de Navegación */
+        .tabs { display: flex; gap: 8px; width: 100%; max-width: 400px; margin-bottom: 16px; }
+        .tab-btn { flex: 1; background-color: #374151; color: #9ca3af; border: none; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.15s; }
+        .tab-btn.active { background-color: #4f46e5; color: white; }
+
         main {
             width: 100%;
             max-width: 400px;
@@ -31,6 +36,9 @@
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
             border: 1px solid #374151;
         }
+        .module-section { display: none; }
+        .module-section.active { display: block; }
+
         .flex-gap { display: flex; gap: 16px; margin-bottom: 24px; }
         .w-1/2 { width: 50%; }
         label { display: block; font-size: 0.75rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; margin-bottom: 8px; }
@@ -54,7 +62,7 @@
             margin-bottom: 24px;
         }
         .panel-audio span { display: block; font-size: 0.75rem; color: #a5b4fc; font-family: monospace; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
-        #btn-play {
+        .btn-main {
             width: 100%;
             background-color: #4f46e5;
             color: white;
@@ -67,8 +75,8 @@
             transition: background 0.15s, transform 0.1s;
             box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.4);
         }
-        #btn-play:active { transform: scale(0.98); background-color: #4338ca; }
-        #status-text { color: #9ca3af; font-size: 0.875rem; margin-top: 12px; margin-bottom: 0; font-style: italic; }
+        .btn-main:active { transform: scale(0.98); background-color: #4338ca; }
+        .status-text { color: #9ca3af; font-size: 0.875rem; margin-top: 12px; margin-bottom: 0; font-style: italic; }
         .space-y { display: flex; flex-direction: column; gap: 12px; }
         .option-btn {
             width: 100%;
@@ -90,7 +98,7 @@
         .option-btn:hover { background-color: #4b5563; }
         .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .intervals-tag { font-family: monospace; font-size: 0.75rem; color: #9ca3af; }
-        #feedback { margin-top: 24px; text-align: center; font-weight: bold; font-size: 1.125rem; padding: 12px; border-radius: 12px; display: none; }
+        .feedback { margin-top: 24px; text-align: center; font-weight: bold; font-size: 1.125rem; padding: 12px; border-radius: 12px; display: none; }
         .bg-correct { display: block !important; background-color: rgba(6, 78, 59, 0.5); color: #34d399; border: 1px solid #065f46; }
         .bg-incorrect { display: block !important; background-color: rgba(153, 27, 27, 0.5); color: #f87171; border: 1px solid #991b1b; }
         footer { margin-top: auto; padding: 16px 0; font-size: 0.75rem; color: #6b7280; text-align: center; }
@@ -100,10 +108,17 @@
 
     <header>
         <h1>Entrenamiento Auditivo</h1>
-        <p>Módulo 1: Reconocimiento de Escalas Menores</p>
+        <p>Tu laboratorio musical de estudio</p>
     </header>
 
+    <!-- Control de Pestañas -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchModule('mod-escalas')">Escalas Menores</button>
+        <button class="tab-btn" onclick="switchModule('mod-funciones')">Tónica / Dominante</button>
+    </div>
+
     <main>
+        <!-- Selectores Globales de Tonalidad -->
         <div class="flex-gap">
             <div class="w-1/2">
                 <label>Nota Raíz</label>
@@ -124,71 +139,95 @@
             </div>
         </div>
 
-        <div class="panel-audio">
-            <span>Generador de Escalas</span>
-            <button id="btn-play" onclick="playScale()">🔊 Escuchar Escala Aleatoria</button>
-            <p id="status-text">Presiona el botón para empezar la trivia.</p>
-        </div>
-
-        <div>
-            <label style="margin-bottom: 12px;">¿Qué escala escuchaste?</label>
-            <div class="space-y">
-                <button onclick="checkAnswer('natural')" class="option-btn">
-                    <span>Escala Menor Natural</span>
-                    <span class="intervals-tag">1 2 ♭3 4 5 ♭6 ♭7</span>
-                </button>
-                <button onclick="checkAnswer('harmonica')" class="option-btn">
-                    <span>Escala Menor Armónica</span>
-                    <span class="intervals-tag">1 2 ♭3 4 5 ♭6 7</span>
-                </button>
-                <button onclick="checkAnswer('melodica')" class="option-btn">
-                    <span>Escala Menor Melódica</span>
-                    <span class="intervals-tag">1 2 ♭3 4 5 6 7</span>
-                </button>
+        <!-- MÓDULO 1: RECONOCIMIENTO DE ESCALAS -->
+        <div id="mod-escalas" class="module-section active">
+            <div class="panel-audio">
+                <span>Módulo de Escalas Menores</span>
+                <button class="btn-main" id="btn-play-scales">🔊 Escuchar Escala Aleatoria</button>
+                <p class="status-text" id="status-scales">Presiona el botón para empezar la trivia.</p>
             </div>
+            <div>
+                <label style="margin-bottom: 12px;">¿Qué escala escuchaste?</label>
+                <div class="space-y">
+                    <button class="option-btn scale-opt" data-type="natural">
+                        <span>Escala Menor Natural</span>
+                        <span class="intervals-tag">1 2 ♭3 4 5 ♭6 ♭7</span>
+                    </button>
+                    <button class="option-btn scale-opt" data-type="harmonica">
+                        <span>Escala Menor Armónica</span>
+                        <span class="intervals-tag">1 2 ♭3 4 5 ♭6 7</span>
+                    </button>
+                    <button class="option-btn scale-opt" data-type="melodica">
+                        <span>Escala Menor Melódica</span>
+                        <span class="intervals-tag">1 2 ♭3 4 5 6 7</span>
+                    </button>
+                </div>
+            </div>
+            <div class="feedback" id="feedback-scales"></div>
         </div>
 
-        <div id="feedback"></div>
+        <!-- MÓDULO 2: TÓNICA Y DOMINANTE -->
+        <div id="mod-funciones" class="module-section">
+            <div class="panel-audio">
+                <span>Módulo Funciones Armónicas</span>
+                <button class="btn-main" id="btn-play-functions">🔊 Escuchar Grado Aleatorio</button>
+                <p class="status-text" id="status-functions">Se tocará una guía corta y luego la nota misteriosa.</p>
+            </div>
+            <div>
+                <label style="margin-bottom: 12px;">¿Qué función cumple la última nota?</label>
+                <div class="space-y">
+                    <button class="option-btn func-opt" data-type="tonica">
+                        <span>Tónica / Reposo</span>
+                        <span class="intervals-tag">Grado I (Estable)</span>
+                    </button>
+                    <button class="option-btn func-opt" data-type="dominante">
+                        <span>Dominante / Tensión</span>
+                        <span class="intervals-tag">Grado V (Inestable)</span>
+                    </button>
+                </div>
+            </div>
+            <div class="feedback" id="feedback-functions"></div>
+        </div>
     </main>
 
     <footer>
-        Desarrollo Nativo • Asegúrate de subir el volumen multimedia de tu celular.
+        Desarrollo Nativo • El oído se entrena con consistencia diaria.
     </footer>
 
     <script>
-        // Frecuencias base internacionales en Hz para la octava 4
         const noteFrequencies = {
-            "C": 261.63,
-            "D": 293.66,
-            "E": 329.63,
-            "G": 392.00,
-            "A": 440.00
+            "C": 261.63, "D": 293.66, "E": 329.63, "G": 392.00, "A": 440.00
         };
 
-        // Estructuras de intervalos menores en semitonos
         const scaleIntervals = {
-            natural:,
-            harmonica:,
-            melodica:
+            natural:, harmonica:, melodica:
         };
 
         let currentScaleType = ""; 
+        let currentFuncType = "";
         let isPlaying = false;
         let audioCtx = null;
 
-        // Función nativa para generar el tono de la nota musical sin librerías externas
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
         function playTone(frequency, startTime, duration) {
+            if (!audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             
-            // Usamos onda triangular por ser más agradable al oído para estudiar teoría
             osc.type = "triangle";
             osc.frequency.setValueAtTime(frequency, startTime);
             
-            // Envolvente de sonido suave para evitar chasquidos en las bocinas del celular
             gainNode.gain.setValueAtTime(0, startTime);
-            gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.05);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration - 0.05);
+            gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration - 0.02);
             
             osc.connect(gainNode);
             gainNode.connect(audioCtx.destination);
@@ -197,54 +236,6 @@
             osc.stop(startTime + duration);
         }
 
-        async function playScale() {
-            if (isPlaying) return;
-            
-            // Inicializar el contexto de audio nativo bajo la acción directa del botón
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            
-            // Forzar el estado de reproducción si el navegador del celular lo suspendió
-            if (audioCtx.state === 'suspended') {
-                await audioCtx.resume();
-            }
-            
-            resetUI();
-
-            // 1. Selección aleatoria del ejercicio
-            const types = ['natural', 'harmonica', 'melodica'];
-            currentScaleType = types[Math.floor(Math.random() * types.length)];
-
-            // 2. Cálculo matemático de frecuencias exactas según la raíz elegida
-            const root = document.getElementById('root-note').value;
-            let octaveFactor = parseInt(document.getElementById('octave').value) === 3 ? 0.5 : 1.0;
-            const baseFreq = noteFrequencies[root] * octaveFactor;
-
-            const intervals = scaleIntervals[currentScaleType];
-            const frequenciesToPlay = intervals.map(semi => baseFreq * Math.pow(2, semi / 12));
-
-            // 3. Bloqueo temporal de botones mientras suena la escala
-            isPlaying = true;
-            document.getElementById('status-text').innerText = "Reproduciendo escala...";
-            toggleButtons(true);
-
-            // 4. Programación secuencial de las 8 notas musicales
-            let now = audioCtx.currentTime;
-            let noteDuration = 0.4; // Duración de cada nota en segundos
-            let noteSpacing = 0.45; // Intervalo de tiempo entre notas
-
-            frequenciesToPlay.forEach((freq, index) => {
-                playTone(freq, now + (index * noteSpacing), noteDuration);
-            });
-
-            // Desbloquear al finalizar la reproducción
-            setTimeout(() => {
-                isPlaying = false;
-                document.getElementById('status-text').innerText = "¡Listo! Selecciona tu respuesta abajo.";
-                toggleButtons(false);
-            }, frequenciesToPlay.length * noteSpacing * 1000);
-        }
-
-        function checkAnswer(selectedType) {
+        // --- LÓGICA DE NAVEGACIÓN EN PESTAÑAS ---
+        function switchModule(modId) {
             
