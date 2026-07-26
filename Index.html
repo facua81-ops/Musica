@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>App de Entrenamiento Auditivo</title>
-    <!-- Tone.js cargado de forma segura -->
-    <script src="https://cloudflare.com"></script>
     <style>
+        /* CSS Integrado - Robusto para móviles */
         body {
             background-color: #111827;
             color: #f3f4f6;
@@ -127,7 +126,6 @@
 
         <div class="panel-audio">
             <span>Generador de Escalas</span>
-            <!-- Corregido a evento onclick directo para cumplir con la política de seguridad móvil -->
             <button id="btn-play" onclick="playScale()">🔊 Escuchar Escala Aleatoria</button>
             <p id="status-text">Presiona el botón para empezar la trivia.</p>
         </div>
@@ -154,16 +152,20 @@
     </main>
 
     <footer>
-        Desarrollo Base MVP • Asegúrate de desactivar el modo silencio de tu móvil.
+        Desarrollo Nativo • Asegúrate de subir el volumen multimedia de tu celular.
     </footer>
 
     <script>
-        // Configuración del sintetizador básico
-        const synth = new Tone.Synth({
-            oscillator: { type: "triangle" }, 
-            envelope: { attack: 0.05, decay: 0.1, sustain: 0.7, release: 0.3 }
-        }).toDestination();
+        // Frecuencias base internacionales en Hz para la octava 4
+        const noteFrequencies = {
+            "C": 261.63,
+            "D": 293.66,
+            "E": 329.63,
+            "G": 392.00,
+            "A": 440.00
+        };
 
+        // Estructuras de intervalos menores en semitonos
         const scaleIntervals = {
             natural:,
             harmonica:,
@@ -172,81 +174,77 @@
 
         let currentScaleType = ""; 
         let isPlaying = false;
+        let audioCtx = null;
+
+        // Función nativa para generar el tono de la nota musical sin librerías externas
+        function playTone(frequency, startTime, duration) {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            // Usamos onda triangular por ser más agradable al oído para estudiar teoría
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(frequency, startTime);
+            
+            // Envolvente de sonido suave para evitar chasquidos en las bocinas del celular
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration - 0.05);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
 
         async function playScale() {
             if (isPlaying) return;
             
-            try {
-                // Forzar el inicio y desbloqueo del contexto de audio web en el navegador móvil
-                await Tone.start();
-                if (Tone.context.state !== 'running') {
-                    await Tone.context.resume();
-                }
-                
-                resetUI();
-
-                const types = ['natural', 'harmonica', 'melodica'];
-                currentScaleType = types[Math.floor(Math.random() * types.length)];
-
-                const root = document.getElementById('root-note').value;
-                const octave = parseInt(document.getElementById('octave').value);
-                const baseFrequency = Tone.Frequency(`${root}${octave}`).toFrequency();
-
-                const intervals = scaleIntervals[currentScaleType];
-                const notesToPlay = intervals.map(semi => baseFrequency * Math.pow(2, semi / 12));
-
-                isPlaying = true;
-                document.getElementById('status-text').innerText = "Reproduciendo escala...";
-                toggleButtons(true);
-
-                let now = Tone.now();
-                notesToPlay.forEach((freq, index) => {
-                    synth.triggerAttackRelease(freq, "4n", now + (index * 0.4));
-                });
-
-                setTimeout(() => {
-                    isPlaying = false;
-                    document.getElementById('status-text').innerText = "¡Listo! Elige tu respuesta abajo.";
-                    toggleButtons(false);
-                }, notesToPlay.length * 400);
-
-            } catch (error) {
-                document.getElementById('status-text').innerText = "Error de audio. Reintenta.";
-                console.error(error);
-                isPlaying = false;
-                toggleButtons(false);
+            // Inicializar el contexto de audio nativo bajo la acción directa del botón
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
+            
+            // Forzar el estado de reproducción si el navegador del celular lo suspendió
+            if (audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
+            
+            resetUI();
+
+            // 1. Selección aleatoria del ejercicio
+            const types = ['natural', 'harmonica', 'melodica'];
+            currentScaleType = types[Math.floor(Math.random() * types.length)];
+
+            // 2. Cálculo matemático de frecuencias exactas según la raíz elegida
+            const root = document.getElementById('root-note').value;
+            let octaveFactor = parseInt(document.getElementById('octave').value) === 3 ? 0.5 : 1.0;
+            const baseFreq = noteFrequencies[root] * octaveFactor;
+
+            const intervals = scaleIntervals[currentScaleType];
+            const frequenciesToPlay = intervals.map(semi => baseFreq * Math.pow(2, semi / 12));
+
+            // 3. Bloqueo temporal de botones mientras suena la escala
+            isPlaying = true;
+            document.getElementById('status-text').innerText = "Reproduciendo escala...";
+            toggleButtons(true);
+
+            // 4. Programación secuencial de las 8 notas musicales
+            let now = audioCtx.currentTime;
+            let noteDuration = 0.4; // Duración de cada nota en segundos
+            let noteSpacing = 0.45; // Intervalo de tiempo entre notas
+
+            frequenciesToPlay.forEach((freq, index) => {
+                playTone(freq, now + (index * noteSpacing), noteDuration);
+            });
+
+            // Desbloquear al finalizar la reproducción
+            setTimeout(() => {
+                isPlaying = false;
+                document.getElementById('status-text').innerText = "¡Listo! Selecciona tu respuesta abajo.";
+                toggleButtons(false);
+            }, frequenciesToPlay.length * noteSpacing * 1000);
         }
 
         function checkAnswer(selectedType) {
-            if (!currentScaleType) {
-                alert("Primero debes escuchar una escala presionando el botón de arriba.");
-                return;
-            }
-
-            const feedbackDiv = document.getElementById('feedback');
-            feedbackDiv.className = ""; 
-
-            if (selectedType === currentScaleType) {
-                feedbackDiv.innerText = "¡Correcto! Es una escala menor " + translateType(currentScaleType);
-                feedbackDiv.classList.add('bg-correct');
-            } else {
-                feedbackDiv.innerText = "Incorrecto. Era una escala menor " + translateType(currentScaleType);
-                feedbackDiv.classList.add('bg-incorrect');
-            }
-        }
-
-        function translateType(type) {
-            if(type === 'natural') return 'Natural';
-            if(type === 'harmonica') return 'Armónica';
-            return 'Melódica';
-        }
-
-        function resetUI() {
-            const feedbackDiv = document.getElementById('feedback');
-            feedbackDiv.style.display = 'none';
-            feedbackDiv.className = "";
-        }
-
-        function toggleButtons(disabled) {
-      
+            
