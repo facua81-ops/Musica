@@ -1,3 +1,4 @@
+  
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,7 +10,6 @@
     <!-- Tone.js para la generación de audio sintético real -->
     <script src="https://cloudflare.com"></script>
 </head>
-
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center p-4 font-sans">
 
     <header class="text-center my-6">
@@ -75,15 +75,15 @@
         Desarrollo Base MVP • Usa auriculares para mejor respuesta de graves.
     </footer>
 
-    <!-- LÓGICA DE PROGRAMACIÓN EN JAVASCRIPT -->
+    <!-- LÓGICA DE PROGRAMACIÓN EN JAVASCRIPT CORREGIDA -->
     <script>
         // Configuración del sintetizador básico de Tone.js
         const synth = new Tone.Synth({
-            oscillator: { type: "triangle" }, // Sonido suave tipo flauta/piano eléctrico
+            oscillator: { type: "triangle" }, 
             envelope: { attack: 0.1, decay: 0.2, sustain: 0.6, release: 0.4 }
         }).toDestination();
 
-        // Estructuras de intervalos en semitonos (Escalas de 7 notas + octava)
+        // Estructuras de intervalos corregidas (en semitonos)
         const scaleIntervals = {
             natural:,
             harmonica:,
@@ -96,7 +96,7 @@
         document.getElementById('btn-play').addEventListener('click', async () => {
             if (isPlaying) return;
             
-            // Tone.js requiere que el usuario interactúe antes de activar el contexto de audio
+            // Tone.js requiere interacción del usuario antes de activar el audio
             await Tone.start();
             resetUI();
 
@@ -109,7 +109,7 @@
             const octave = parseInt(document.getElementById('octave').value);
             const baseFrequency = Tone.Frequency(`${root}${octave}`).toFrequency();
 
-            // 3. Construir las frecuencias de las 7 notas ascendentes
+            // 3. Construir las frecuencias de las notas ascendentes
             const intervals = scaleIntervals[currentScaleType];
             const notesToPlay = intervals.map(semi => baseFrequency * Math.pow(2, semi / 12));
 
@@ -120,11 +120,10 @@
 
             let now = Tone.now();
             notesToPlay.forEach((freq, index) => {
-                // Toca cada nota cada 0.5 segundos
                 synth.triggerAttackRelease(freq, "4n", now + (index * 0.5));
             });
 
-            // Desbloquear interfaz al terminar la reproducción
+            // Desbloquear interfaz al terminar
             setTimeout(() => {
                 isPlaying = false;
                 document.getElementById('status-text').innerText = "¡Listo! Elige tu respuesta abajo.";
@@ -132,7 +131,7 @@
             }, notesToPlay.length * 500);
         });
 
-        // Comprobación de respuestas de la trivia
+        // Comprobación de respuestas
         function checkAnswer(selectedType) {
             if (!currentScaleType) {
                 alert("Primero debes escuchar una escala presionando el botón de arriba.");
@@ -140,7 +139,7 @@
             }
 
             const feedbackDiv = document.getElementById('feedback');
-            feedbackDiv.classList.remove('hidden', 'bg-green-900/50', 'text-green-400', 'bg-red-900/50', 'text-red-400');
+            feedbackDiv.className = "mt-6 text-center font-bold text-lg p-3 rounded-xl"; // Resetea clases de estilos
 
             if (selectedType === currentScaleType) {
                 feedbackDiv.innerText = "¡Correcto! Es una escala menor " + translateType(currentScaleType);
@@ -151,7 +150,6 @@
             }
         }
 
-        // Funciones auxiliares de UI
         function translateType(type) {
             if(type === 'natural') return 'Natural';
             if(type === 'harmonica') return 'Armónica';
