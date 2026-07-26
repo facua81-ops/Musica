@@ -21,7 +21,6 @@
         h1 { color: #818cf8; font-size: 1.8rem; margin: 0; font-weight: bold; }
         header p { color: #9ca3af; font-size: 0.875rem; margin-top: 4px; }
         
-        /* Pestañas de Navegación */
         .tabs { display: flex; gap: 8px; width: 100%; max-width: 400px; margin-bottom: 16px; }
         .tab-btn { flex: 1; background-color: #374151; color: #9ca3af; border: none; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.15s; }
         .tab-btn.active { background-color: #4f46e5; color: white; }
@@ -111,14 +110,12 @@
         <p>Tu laboratorio musical de estudio</p>
     </header>
 
-    <!-- Control de Pestañas -->
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchModule('mod-escalas')">Escalas Menores</button>
-        <button class="tab-btn" onclick="switchModule('mod-funciones')">Tónica / Dominante</button>
+        <button class="tab-btn active" onclick="switchModule(event, 'mod-escalas')">Escalas Menores</button>
+        <button class="tab-btn" onclick="switchModule(event, 'mod-funciones')">Tónica / Dominante</button>
     </div>
 
     <main>
-        <!-- Selectores Globales de Tonalidad -->
         <div class="flex-gap">
             <div class="w-1/2">
                 <label>Nota Raíz</label>
@@ -139,25 +136,26 @@
             </div>
         </div>
 
-        <!-- MÓDULO 1: RECONOCIMIENTO DE ESCALAS -->
+        <!-- MÓDULO 1: ESCALAS -->
         <div id="mod-escalas" class="module-section active">
             <div class="panel-audio">
                 <span>Módulo de Escalas Menores</span>
-                <button class="btn-main" id="btn-play-scales">🔊 Escuchar Escala Aleatoria</button>
+                <!-- Evento onclick directo e inmediato para móviles -->
+                <button class="btn-main" onclick="handleScalesPlay()">🔊 Escuchar Escala Aleatoria</button>
                 <p class="status-text" id="status-scales">Presiona el botón para empezar la trivia.</p>
             </div>
             <div>
                 <label style="margin-bottom: 12px;">¿Qué escala escuchaste?</label>
                 <div class="space-y">
-                    <button class="option-btn scale-opt" data-type="natural">
+                    <button class="option-btn scale-opt" onclick="handleScalesAnswer('natural')">
                         <span>Escala Menor Natural</span>
                         <span class="intervals-tag">1 2 ♭3 4 5 ♭6 ♭7</span>
                     </button>
-                    <button class="option-btn scale-opt" data-type="harmonica">
+                    <button class="option-btn scale-opt" onclick="handleScalesAnswer('harmonica')">
                         <span>Escala Menor Armónica</span>
                         <span class="intervals-tag">1 2 ♭3 4 5 ♭6 7</span>
                     </button>
-                    <button class="option-btn scale-opt" data-type="melodica">
+                    <button class="option-btn scale-opt" onclick="handleScalesAnswer('melodica')">
                         <span>Escala Menor Melódica</span>
                         <span class="intervals-tag">1 2 ♭3 4 5 6 7</span>
                     </button>
@@ -170,17 +168,18 @@
         <div id="mod-funciones" class="module-section">
             <div class="panel-audio">
                 <span>Módulo Funciones Armónicas</span>
-                <button class="btn-main" id="btn-play-functions">🔊 Escuchar Grado Aleatorio</button>
+                <!-- Evento onclick directo e inmediato para móviles -->
+                <button class="btn-main" onclick="handleFunctionsPlay()">🔊 Escuchar Grado Aleatorio</button>
                 <p class="status-text" id="status-functions">Se tocará una guía corta y luego la nota misteriosa.</p>
             </div>
             <div>
                 <label style="margin-bottom: 12px;">¿Qué función cumple la última nota?</label>
                 <div class="space-y">
-                    <button class="option-btn func-opt" data-type="tonica">
+                    <button class="option-btn func-opt" onclick="handleFunctionsAnswer('tonica')">
                         <span>Tónica / Reposo</span>
                         <span class="intervals-tag">Grado I (Estable)</span>
                     </button>
-                    <button class="option-btn func-opt" data-type="dominante">
+                    <button class="option-btn func-opt" onclick="handleFunctionsAnswer('dominante')">
                         <span>Dominante / Tensión</span>
                         <span class="intervals-tag">Grado V (Inestable)</span>
                     </button>
@@ -200,7 +199,9 @@
         };
 
         const scaleIntervals = {
-            natural:, harmonica:, melodica:
+            natural:,
+            harmonica:,
+            melodica: [0, 2, 3, 5, 7, 9, 11, 12]
         };
 
         let currentScaleType = ""; 
@@ -208,6 +209,7 @@
         let isPlaying = false;
         let audioCtx = null;
 
+        // Forzar el inicio seguro del motor de audio en cada interacción táctil
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -230,12 +232,5 @@
             gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration - 0.02);
             
             osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
             
-            osc.start(startTime);
-            osc.stop(startTime + duration);
-        }
-
-        // --- LÓGICA DE NAVEGACIÓN EN PESTAÑAS ---
-        function switchModule(modId) {
             
