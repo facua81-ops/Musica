@@ -140,7 +140,6 @@
         <div id="mod-escalas" class="module-section active">
             <div class="panel-audio">
                 <span>Módulo de Escalas Menores</span>
-                <!-- Evento onclick directo e inmediato para móviles -->
                 <button class="btn-main" onclick="handleScalesPlay()">🔊 Escuchar Escala Aleatoria</button>
                 <p class="status-text" id="status-scales">Presiona el botón para empezar la trivia.</p>
             </div>
@@ -168,7 +167,6 @@
         <div id="mod-funciones" class="module-section">
             <div class="panel-audio">
                 <span>Módulo Funciones Armónicas</span>
-                <!-- Evento onclick directo e inmediato para móviles -->
                 <button class="btn-main" onclick="handleFunctionsPlay()">🔊 Escuchar Grado Aleatorio</button>
                 <p class="status-text" id="status-functions">Se tocará una guía corta y luego la nota misteriosa.</p>
             </div>
@@ -190,7 +188,7 @@
     </main>
 
     <footer>
-        Desarrollo Nativo • El oído se entrena con consistencia diaria.
+        Motor Forzado de Audio Nativo • Sube el volumen general de multimedia.
     </footer>
 
     <script>
@@ -201,7 +199,7 @@
         const scaleIntervals = {
             natural:,
             harmonica:,
-            melodica: [0, 2, 3, 5, 7, 9, 11, 12]
+            melodica:
         };
 
         let currentScaleType = ""; 
@@ -209,7 +207,7 @@
         let isPlaying = false;
         let audioCtx = null;
 
-        // Forzar el inicio seguro del motor de audio en cada interacción táctil
+        // SISTEMA DE DESBLOQUEO INMEDIATO EXIGIDO POR CHROME MOBILE
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -217,6 +215,14 @@
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
+            // Tocar un micropulso de 0.01 segundos de silencio absoluto para despertar el chip de audio físicamente
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.01);
         }
 
         function playTone(frequency, startTime, duration) {
@@ -228,9 +234,4 @@
             osc.frequency.setValueAtTime(frequency, startTime);
             
             gainNode.gain.setValueAtTime(0, startTime);
-            gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration - 0.02);
-            
-            osc.connect(gainNode);
-            
             
